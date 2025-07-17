@@ -1,10 +1,7 @@
-import { NavLink } from "react-router";
+export default function Tab({ icon, name }) {
 
-export default function Tab({ id, icon, name, url }) {
     return (
-        <NavLink
-            key={id}
-            to={url}
+        <div
             style={{
                 border: "2px solid black",
                 padding: "8px",
@@ -12,10 +9,12 @@ export default function Tab({ id, icon, name, url }) {
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
+                cursor: "pointer",
+                userSelect: "none",
             }}
         >
             <img src={icon} alt={name} style={{ width: "20px", height: "20px" }} />
             <span>{name}</span>
-        </NavLink>
+        </div>
     );
 }
