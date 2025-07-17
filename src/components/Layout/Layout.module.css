@@ -1,0 +1,32 @@
+body{
+    background-color: #F4F7F9;
+}
+.layoutContainer {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+.contentArea {
+    display: flex;
+    flex-direction: column;
+    margin-left: 84px;
+    margin-top: 60px;
+    flex-grow: 1;
+}
+
+.tabsContainer {
+    padding: 8px 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    border-radius: 10px;
+}
+
+.mainContent {
+    padding: 16px;
+    flex-grow: 1;
+    overflow-y: auto;
+    margin: 20px 40px;
+    background-color: #FEFEFE;
+    border-radius: 10px;
+}

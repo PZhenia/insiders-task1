@@ -1,20 +1,18 @@
 import { BrowserRouter, Routes, Route } from 'react-router';
 
-import TabsBar from "./components/TabsBar.jsx";
+import Layout from "./components/Layout";
 import Home from './pages/home';
 
 function App() {
-
-  return (
-      <>
-          <BrowserRouter>
-              <TabsBar />
-              <Routes>
-                  <Route path="*" element={<Home />} />
-              </Routes>
-          </BrowserRouter>
-      </>
-  )
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<Layout />}>
+                    <Route path="*" element={<Home />} />
+                </Route>
+            </Routes>
+        </BrowserRouter>
+    );
 }
 
-export default App
+export default App;
