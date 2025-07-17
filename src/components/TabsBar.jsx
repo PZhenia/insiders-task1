@@ -7,6 +7,7 @@ import {
     SortableContext,
     useSortable,
     horizontalListSortingStrategy,
+    rectSortingStrategy
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -32,7 +33,7 @@ function useWindowWidth() {
     return width;
 }
 
-function SortableTab({ id, icon, name, url, onWidthMeasured }) { //перетягувана вкладка
+function SortableTab({ id, icon, name, url, onWidthMeasured, isDropdown  }) { //перетягувана вкладка
     const {
         attributes,
         listeners,
@@ -46,26 +47,23 @@ function SortableTab({ id, icon, name, url, onWidthMeasured }) { //перетя�
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (localRef.current) {
+        if (!isDropdown && localRef.current) {
             const width = localRef.current.getBoundingClientRect().width;
             onWidthMeasured(id, width);
         }
-    }, [id, onWidthMeasured]);
+    }, [id, onWidthMeasured, isDropdown]);
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         cursor: "grab",
         userSelect: "none",
+        display: "flex",
+        alignItems: "center",
     };
 
-    const handleMouseDown = () => {
-        setDragging(false);
-    };
-
-    const handleMouseMove = () => {
-        setDragging(true);
-    };
+    const handleMouseDown = () => setDragging(false);
+    const handleMouseMove = () => setDragging(true);
 
     const handleMouseUp = () => {
         if (!dragging) {
@@ -101,7 +99,6 @@ export default function TabsBar() {
     const [tabWidths, setTabWidths] = useState({});
     const width = useWindowWidth();
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const navigate = useNavigate();
 
     const handleWidthMeasured = useCallback((id, width) => {
         setTabWidths((prev) => {
@@ -116,13 +113,12 @@ export default function TabsBar() {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(orderedTabs));
     }, [orderedTabs]);
 
-    const handleDragEnd = (event) => {
-        const { active, over } = event;
-        if (active.id !== over?.id) {
-            const oldIndex = orderedTabs.findIndex((tab) => tab.id === active.id);
-            const newIndex = orderedTabs.findIndex((tab) => tab.id === over.id);
-            setOrderedTabs((tabs) => arrayMove(tabs, oldIndex, newIndex));
-        }
+    const handleDragEnd = ({ active, over }) => {
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = orderedTabs.findIndex((t) => t.id === active.id);
+        const newIndex = orderedTabs.findIndex((t) => t.id === over.id);
+        setOrderedTabs((tabs) => arrayMove(tabs, oldIndex, newIndex));
     };
 
     const widthsInOrder = orderedTabs.map((tab) => tabWidths[tab.id] || 0);
@@ -147,12 +143,12 @@ export default function TabsBar() {
     return (
         <>
             <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext
-                    items={orderedTabs.map((tab) => tab.id)}
-                    strategy={horizontalListSortingStrategy}
-                >
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                        <div style={{ display: "flex", flexDirection: "row", flexWrap: "nowrap" }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                    <SortableContext
+                        items={visibleTabs.map((t) => t.id)}
+                        strategy={horizontalListSortingStrategy}
+                    >
+                        <div style={{ display: "flex", flexWrap: "nowrap" }}>
                             {visibleTabs.map((tab) => (
                                 <SortableTab
                                     key={tab.id}
@@ -161,77 +157,60 @@ export default function TabsBar() {
                                 />
                             ))}
                         </div>
+                    </SortableContext>
 
-                        {showDropdownButton && (
-                            <div
-                                style={{
-                                    width: 20,
-                                    height: 20,
-                                    marginLeft: 8,
-                                    cursor: "pointer",
-                                    userSelect: "none",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    border: "1px solid #ccc",
-                                    borderRadius: 3,
-                                    fontSize: 14,
-                                    lineHeight: 1,
-                                    transform: dropdownOpen ? "rotate(180deg)" : "none",
-                                    transition: "transform 0.3s ease",
-
-                                }}
-                                onClick={() => setDropdownOpen((o) => !o)}
-                            >
-                                <img src={dropDownBtn}/>
-                            </div>
-                        )}
-                    </div>
-                </SortableContext>
-            </DndContext>
-
-            {dropdownOpen && dropdownTabs.length > 0 && (
-                <div
-                    style={{
-                        position: "absolute",
-                        marginTop: 4,
-                        border: "2px solid black",
-                        padding: "8px",
-                        margin: "2px",
-                        gap: "8px",
-                        zIndex: 10,
-                    }}
-                >
-                    {dropdownTabs.map((tab) => (
+                    {showDropdownButton && (
                         <div
-                            key={tab.id}
                             style={{
-                                border: "2px solid black",
-                                padding: "8px",
-                                margin: "2px",
+                                width: 20,
+                                height: 20,
+                                marginLeft: 8,
+                                cursor: "pointer",
+                                userSelect: "none",
                                 display: "flex",
                                 alignItems: "center",
-                                gap: "8px",
-                                cursor: "pointer",
-                                whiteSpace: "nowrap",
-                                userSelect: "none",
+                                justifyContent: "center",
+                                border: "1px solid #ccc",
                                 borderRadius: 3,
+                                transform: dropdownOpen ? "rotate(180deg)" : "none",
+                                transition: "transform 0.3s ease",
                             }}
-                            onClick={() => {
-                                navigate(tab.url);
-                                setDropdownOpen(false);
+                            onClick={() => setDropdownOpen((o) => !o)}
+                        >
+                            <img src={dropDownBtn} />
+                        </div>
+                    )}
+                </div>
+
+                {dropdownOpen && dropdownTabs.length > 0 && (
+                    <SortableContext
+                        items={dropdownTabs.map((t) => t.id)}
+                        strategy={rectSortingStrategy}
+                    >
+                        <div
+                            style={{
+                                position: "absolute",
+                                marginTop: 4,
+                                border: "2px solid black",
+                                padding: "8px",
+                                zIndex: 10,
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "8px",
                             }}
                         >
-                            <img
-                                src={tab.icon}
-                                alt={tab.name}
-                                style={{ width: 16, height: 16, objectFit: "contain" }}
-                            />
-                            <span>{tab.name}</span>
+                            {dropdownTabs.map((tab) => (
+                                <SortableTab
+                                    key={tab.id}
+                                    {...tab}
+                                    onWidthMeasured={() => {}}
+                                    isDropdown={true}
+                                />
+                            ))}
                         </div>
-                    ))}
-                </div>
-            )}
+                    </SortableContext>
+                )}
+            </DndContext>
         </>
     );
 }
